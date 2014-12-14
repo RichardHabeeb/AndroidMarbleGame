@@ -5,7 +5,7 @@ import android.graphics.*;
 import java.util.*;
 
 public class Particle {
-    public static float FRICTION = 0.1f;
+    public static float FRICTION = 0.05f;
     public static float BALL_DIAMETER = 0.004f;
     public static float BALL_DIAMETER_2 = BALL_DIAMETER * BALL_DIAMETER;
 

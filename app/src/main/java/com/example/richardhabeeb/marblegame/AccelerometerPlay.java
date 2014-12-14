@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.hardware.SensorManager;
+import android.view.Window;
 import android.view.WindowManager;
 
 
@@ -15,6 +16,10 @@ public class AccelerometerPlay extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         gameView = new Game(this,
                             (WindowManager) getSystemService(WINDOW_SERVICE),

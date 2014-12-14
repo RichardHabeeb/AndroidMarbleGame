@@ -20,14 +20,19 @@ class ParticleSystem
 
     public List<Particle> Balls;
 
+    public List<Wall> Walls;
+
     public ParticleSystem (Game view)
     {
         sim_view = view;
-        Balls = new ArrayList<Particle> ();
+        Balls = new ArrayList<Particle>();
+        Walls = new ArrayList<Wall>();
 
         // Initially our particles have no speed or acceleration
         for (int i = 0; i < NUM_PARTICLES; i++)
             Balls.add(new Particle(this));
+
+        Walls.add(new Wall(900, 0));
     }
 
     // Update the position of each particle in the system using the
@@ -36,7 +41,7 @@ class ParticleSystem
     {
         long t = timestamp;
 
-        if (last_t != 0) {
+        if (last_t != 0 && last_t != t) {
             float dT = (float)(t - last_t) * (1.0f / 1000000000.0f);
 
             if (last_delta_t != 0) {
@@ -51,6 +56,10 @@ class ParticleSystem
         }
 
         last_t = t;
+    }
+
+    private float PointDistance(PointF p1, PointF p2) {
+        return (float)Math.sqrt((p1.x - p2.x)*(p1.x - p2.x) + (p1.y - p2.y)*(p1.y - p2.y));
     }
 
     // Performs one iteration of the simulation. First updating the
@@ -77,34 +86,40 @@ class ParticleSystem
 
             for (int i = 0; i < Balls.size(); i++) {
                 Particle curr = Balls.get(i);
+                PointF ballCenter =  curr.getLocation();
 
-                for (int j = i + 1; j < Balls.size(); j++) {
-                    Particle ball = Balls.get(j);
+                for (int j = 0; j < Walls.size(); j++) {
+                    Wall wall = Walls.get(j);
+                    PointF wallCenter = wall.getCenter(sim_view.origin);
+                    PointF[] wallCorners = wall.getCorners(sim_view.origin);
 
-                    float dx = ball.getLocation().x - curr.getLocation().x;
-                    float dy = ball.getLocation().y - curr.getLocation().y;
-                    float dd = dx * dx + dy * dy;
+                    double theta = 180*Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x) / (Math.PI);
 
-                    // Check for collisions
-                    if (dd <= Particle.BALL_DIAMETER_2) {
+                    PointF edgePointClosestToWall = new PointF(
+                            ballCenter.x + (Particle.BALL_DIAMETER / 2.0f) * (float)Math.cos(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)),
+                            ballCenter.y + (Particle.BALL_DIAMETER / 2.0f) * (float)Math.sin(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)));
 
-                        // add a little bit of entropy, after nothing is
-                        // perfect in the universe.
-                        dx += (random.nextFloat() - 0.5f) * 0.0001f;
-                        dy += (random.nextFloat() - 0.5f) * 0.0001f;
-                        dd = dx * dx + dy * dy;
-
-                        // simulate the spring
-                        float d = (float)Math.sqrt(dd);
-                        float c = (0.5f * (Particle.BALL_DIAMETER - d)) / d;
-
-                        curr.getLocation().x -= dx * c;
-                        curr.getLocation().y -= dy * c;
-                        ball.getLocation().x += dx * c;
-                        ball.getLocation().y += dy * c;
-
+                    for(int p = 0; p < wallCorners.length; p++) {
+                        if (PointDistance(wallCorners[p], ballCenter) < (Particle.BALL_DIAMETER / 2.0f)) {
+                            more = true;
+                        }
+                    }
+                    if (PointDistance(wallCenter, ballCenter) < (Particle.BALL_DIAMETER / 2.0f)) {
                         more = true;
                     }
+                    if(edgePointClosestToWall.x > wallCorners[0].x &&
+                       edgePointClosestToWall.x < wallCorners[2].x &&
+                       edgePointClosestToWall.y < wallCorners[0].y &&
+                       edgePointClosestToWall.y > wallCorners[2].y) {
+                        more = true;
+                    }
+
+
+
+
+
+
+
                 }
 
                 // Finally make sure the particle doesn't intersects

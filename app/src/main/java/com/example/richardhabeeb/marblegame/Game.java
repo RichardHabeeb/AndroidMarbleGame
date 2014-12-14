@@ -1,23 +1,16 @@
 package com.example.richardhabeeb.marblegame;
 
+
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.PointF;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.text.BoringLayout;
-import android.text.TextPaint;
-import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.view.Display;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
@@ -35,9 +28,9 @@ public class Game extends View implements SensorEventListener  {
     private Bitmap ballBitmap;
     private Date sensorTimeStamp;
     private ParticleSystem particles;
-    private PointF origin;
-    private float meters_to_pixels_x;
-    private float meters_to_pixels_y;
+    public PointF origin;
+    public static float pixels_per_meter_x;
+    public static float pixels_per_meter_y;
 
     public Game(Context context, WindowManager windowManager, SensorManager sensorManager ) {
         super(context);
@@ -51,15 +44,18 @@ public class Game extends View implements SensorEventListener  {
         background = BitmapFactory.decodeResource(getResources(), R.drawable.icecream);
         ballBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ball);
 
-        particles = new ParticleSystem(this);
         origin = new PointF();
         sensorValues = new PointF();
         sensorTimeStamp = new Date();
 
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
-        meters_to_pixels_x = metrics.xdpi / 0.0254f;
-        meters_to_pixels_y = metrics.ydpi / 0.0254f;
+        pixels_per_meter_x = metrics.xdpi / 0.0254f;
+        pixels_per_meter_y = metrics.ydpi / 0.0254f;
+
+        Particle.BALL_DIAMETER = ballBitmap.getHeight() / pixels_per_meter_y;
+
+        particles = new ParticleSystem(this);
     }
 
 
@@ -67,10 +63,9 @@ public class Game extends View implements SensorEventListener  {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        canvas.drawBitmap(background, 0, 0, null);
         // Compute the new position of our object, based on accelerometer
         // data and present time.
-        particles.Update(sensorValues.x, sensorValues.y, sensorTimeStamp.getTime()*10000); //ms to ticks?
+        particles.Update(sensorValues.x, sensorValues.y, sensorTimeStamp.getTime()*100000); //ms to ticks?
 
         for(int i = 0; i < particles.Balls.size(); i++) {
             Particle ball = particles.Balls.get(i);
@@ -78,10 +73,16 @@ public class Game extends View implements SensorEventListener  {
             // We transform the canvas so that the coordinate system matches
             // the sensors coordinate system with the origin in the center
             // of the screen and the unit is the meter.
-            float x = origin.x + ball.getLocation().x * meters_to_pixels_x;
-            float y = origin.x - ball.getLocation().y * meters_to_pixels_y;
+            float x = origin.x + ball.getLocation().x * pixels_per_meter_x;
+            float y = origin.y - ball.getLocation().y * pixels_per_meter_y;
 
             canvas.drawBitmap(ballBitmap, x, y, null);
+        }
+
+        for(int i = 0; i < particles.Walls.size(); i++) {
+            Wall wall = particles.Walls.get(i);
+
+            canvas.drawRect(wall.rect, wall.paint);
         }
 
         // Make sure to redraw asap
@@ -94,8 +95,8 @@ public class Game extends View implements SensorEventListener  {
         // to the origin of the bitmap
         origin.set((w - ballBitmap.getWidth()) * 0.5f, (h - ballBitmap.getHeight()) * 0.5f);
 
-        particles.Bounds.x = (((float) w / meters_to_pixels_x - Particle.BALL_DIAMETER) * 0.5f);
-        particles.Bounds.y = (((float) h / meters_to_pixels_y - Particle.BALL_DIAMETER) * 0.5f);
+        particles.Bounds.x = (((float) w / pixels_per_meter_x - Particle.BALL_DIAMETER) * 0.5f);
+        particles.Bounds.y = (((float) h / pixels_per_meter_y - Particle.BALL_DIAMETER) * 0.5f);
 
     }
 
