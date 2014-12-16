@@ -14,6 +14,8 @@ import android.util.DisplayMetrics;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.*;
+import android.graphics.*;
 import java.util.Date;
 
 /**
@@ -24,13 +26,17 @@ public class Game extends View implements SensorEventListener  {
     private WindowManager windowManager;
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private Bitmap background;
     private Bitmap ballBitmap;
     private Date sensorTimeStamp;
     private ParticleSystem particles;
     public PointF origin;
     public static float pixels_per_meter_x;
     public static float pixels_per_meter_y;
+
+    private Rect screenCover;
+    private Paint screenCoverPaint;
+    private Paint textPaint;
+    private boolean paused;
 
     public Game(Context context, WindowManager windowManager, SensorManager sensorManager ) {
         super(context);
@@ -41,7 +47,6 @@ public class Game extends View implements SensorEventListener  {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         this.sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
 
-        background = BitmapFactory.decodeResource(getResources(), R.drawable.icecream);
         ballBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ball);
 
         origin = new PointF();
@@ -56,6 +61,17 @@ public class Game extends View implements SensorEventListener  {
         Particle.BALL_DIAMETER = ballBitmap.getHeight() / pixels_per_meter_y;
 
         particles = new ParticleSystem(this);
+
+        screenCover = new Rect(0,0,0,0);
+        screenCoverPaint = new Paint();
+        screenCoverPaint.setAlpha(99);
+
+        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setTextSize(50);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+
+        paused = true;
+
     }
 
 
@@ -85,14 +101,32 @@ public class Game extends View implements SensorEventListener  {
             canvas.drawRect(wall.rect, wall.paint);
         }
 
+        if(paused) {
+            canvas.drawRect(screenCover, screenCoverPaint);
+            canvas.drawText("Tap the screen to start!", canvas.getWidth()/2, canvas.getHeight()/2, textPaint);
+        }
+
         // Make sure to redraw asap
         invalidate();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if(event.getAction() == MotionEvent.ACTION_DOWN) {
+
+            paused = !paused;
+        }
+        return true;
     }
 
     @Override
     public void onSizeChanged (int w, int h, int oldw, int oldh) {
         // Compute the origin of the screen relative
         // to the origin of the bitmap
+
+        screenCover.bottom = h;
+        screenCover.right = w;
+
         origin.set((w - ballBitmap.getWidth()) * 0.5f, (h - ballBitmap.getHeight()) * 0.5f);
 
         particles.Bounds.x = (((float) w / pixels_per_meter_x - Particle.BALL_DIAMETER) * 0.5f);
@@ -103,12 +137,11 @@ public class Game extends View implements SensorEventListener  {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
+        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
 
         sensorTimeStamp = new Date();
 
-        switch(windowManager.getDefaultDisplay().getRotation())
-        {
+        switch (windowManager.getDefaultDisplay().getRotation()) {
             case Surface.ROTATION_0:
                 sensorValues.set(event.values[0], event.values[1]);
                 break;
@@ -129,5 +162,13 @@ public class Game extends View implements SensorEventListener  {
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    public boolean getPaused() {
+        return paused;
+    }
+
+    public void setPaused(boolean p) {
+        paused = p;
     }
 }

@@ -5,7 +5,6 @@ import com.example.richardhabeeb.marblegame.Particle;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Random;
 import android.graphics.PointF;
 
 class ParticleSystem
@@ -56,8 +55,11 @@ class ParticleSystem
             if (last_delta_t != 0) {
                 float dTC = dT / last_delta_t;
 
-                for(int i = 0; i < Balls.size(); i++) {
-                    Balls.get(i).ComputePhysics(sx, sy, dT, dTC);
+                if(!sim_view.getPaused()) {
+                    for (int i = 0; i < Balls.size(); i++) {
+
+                        Balls.get(i).ComputePhysics(sx, sy, dT, dTC);
+                    }
                 }
             }
 
@@ -67,60 +69,57 @@ class ParticleSystem
         last_t = t;
     }
 
-    private float PointDistance(PointF p1, PointF p2) {
-        return (float)Math.sqrt((p1.x - p2.x)*(p1.x - p2.x) + (p1.y - p2.y)*(p1.y - p2.y));
-    }
-
     // Performs one iteration of the simulation. First updating the
     // position of all the particles and resolving the constraints and
     // collisions.
     public void Update (float sx, float sy, long now)
     {
-        // update the system's positions
-        UpdatePositions (sx, sy, now);
+        //if(!sim_view.getPaused()) {
+            // update the system's positions
+            UpdatePositions(sx, sy, now);
 
 
-        for (int i = 0; i < Balls.size(); i++) {
-            Particle curr = Balls.get(i);
-            PointF ballCenter =  curr.getLocation();
+            for (int i = 0; i < Balls.size(); i++) {
+                Particle curr = Balls.get(i);
+                PointF ballCenter = curr.getLocation();
 
-            for (int j = 0; j < Walls.size(); j++) {
-                Wall wall = Walls.get(j);
-                PointF wallCenter = wall.getCenter(sim_view.origin);
-                PointF[] wallCorners = wall.getCorners(sim_view.origin);
+                for (int j = 0; j < Walls.size(); j++) {
+                    Wall wall = Walls.get(j);
+                    PointF wallCenter = wall.getCenter(sim_view.origin);
+                    PointF[] wallCorners = wall.getCorners(sim_view.origin);
 
-                double theta = 180 * Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x) / (Math.PI);
+                    double theta = 180 * Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x) / (Math.PI);
 
-                PointF edgePointClosestToWall = new PointF(
-                        ballCenter.x + (Particle.BALL_DIAMETER / 2.0f) * (float) Math.cos(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)),
-                        ballCenter.y + (Particle.BALL_DIAMETER / 2.0f) * (float) Math.sin(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)));
+                    PointF edgePointClosestToWall = new PointF(
+                            ballCenter.x + (Particle.BALL_DIAMETER / 2.0f) * (float) Math.cos(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)),
+                            ballCenter.y + (Particle.BALL_DIAMETER / 2.0f) * (float) Math.sin(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)));
 
-                if (edgePointClosestToWall.x > wallCorners[0].x &&
-                        edgePointClosestToWall.x < wallCorners[3].x &&
-                        edgePointClosestToWall.y < wallCorners[0].y &&
-                        edgePointClosestToWall.y > wallCorners[3].y) {
+                    if (edgePointClosestToWall.x > wallCorners[0].x &&
+                            edgePointClosestToWall.x < wallCorners[3].x &&
+                            edgePointClosestToWall.y < wallCorners[0].y &&
+                            edgePointClosestToWall.y > wallCorners[3].y) {
 
-                    float distanceToTop = Math.abs(edgePointClosestToWall.y - wallCorners[0].y);
-                    float distanceToLeft = Math.abs(edgePointClosestToWall.x - wallCorners[0].x);
-                    float distanceToBottom = Math.abs(edgePointClosestToWall.y - wallCorners[3].y);
-                    float distanceToRight = Math.abs(edgePointClosestToWall.x - wallCorners[3].x);
+                        float distanceToTop = Math.abs(edgePointClosestToWall.y - wallCorners[0].y);
+                        float distanceToLeft = Math.abs(edgePointClosestToWall.x - wallCorners[0].x);
+                        float distanceToBottom = Math.abs(edgePointClosestToWall.y - wallCorners[3].y);
+                        float distanceToRight = Math.abs(edgePointClosestToWall.x - wallCorners[3].x);
 
-                    if (distanceToTop < distanceToLeft && distanceToTop < distanceToBottom && distanceToTop < distanceToRight) {
-                        curr.getLocation().y += distanceToTop;
-                    } else if (distanceToLeft < distanceToTop && distanceToLeft < distanceToBottom && distanceToLeft < distanceToRight) {
-                        curr.getLocation().x -= distanceToLeft;
-                    } else if (distanceToBottom < distanceToTop && distanceToBottom < distanceToLeft && distanceToBottom < distanceToRight) {
-                        curr.getLocation().y -= distanceToBottom;
-                    } else {
-                        curr.getLocation().x += distanceToRight;
+                        if (distanceToTop < distanceToLeft && distanceToTop < distanceToBottom && distanceToTop < distanceToRight) {
+                            curr.getLocation().y += distanceToTop;
+                        } else if (distanceToLeft < distanceToTop && distanceToLeft < distanceToBottom && distanceToLeft < distanceToRight) {
+                            curr.getLocation().x -= distanceToLeft;
+                        } else if (distanceToBottom < distanceToTop && distanceToBottom < distanceToLeft && distanceToBottom < distanceToRight) {
+                            curr.getLocation().y -= distanceToBottom;
+                        } else {
+                            curr.getLocation().x += distanceToRight;
+                        }
                     }
                 }
+
+                // Finally make sure the particle doesn't intersects
+                // with the walls.
+                curr.ResolveCollisionWithBounds();
             }
-
-            // Finally make sure the particle doesn't intersects
-            // with the walls.
-            curr.ResolveCollisionWithBounds ();
-        }
-
+        //}
     }
 }

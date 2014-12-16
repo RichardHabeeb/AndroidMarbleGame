@@ -16,6 +16,7 @@ public class Wall {
     {
         rect = new Rect(left,top,left + WALL_WIDTH_PX, top + WALL_WIDTH_PX);
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.LTGRAY);
     }
 
     public PointF getCenter(PointF origin)
