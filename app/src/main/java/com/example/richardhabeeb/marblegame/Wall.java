@@ -20,17 +20,17 @@ public class Wall {
 
     public PointF getCenter(PointF origin)
     {
-        return new PointF((rect.centerX() - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.centerY()) / Game.pixels_per_meter_y);
+        return new PointF((rect.centerX() - WALL_WIDTH_PX / 2 - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.centerY() + WALL_WIDTH_PX / 2) / Game.pixels_per_meter_y);
     }
 
     public PointF[] getCorners(PointF origin)
     {
         System.out.print(origin.x);
         return new PointF []{
-                new PointF((rect.left - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.top) / Game.pixels_per_meter_y),
-                new PointF((rect.left - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.bottom) / Game.pixels_per_meter_y),
-                new PointF((rect.right - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.top) / Game.pixels_per_meter_y),
-                new PointF((rect.right - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.bottom) / Game.pixels_per_meter_y),
+                new PointF((rect.left - WALL_WIDTH_PX / 2 - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.top + WALL_WIDTH_PX / 2) / Game.pixels_per_meter_y),
+                new PointF((rect.left - WALL_WIDTH_PX / 2 - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.bottom + WALL_WIDTH_PX / 2) / Game.pixels_per_meter_y),
+                new PointF((rect.right - WALL_WIDTH_PX / 2 - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.top + WALL_WIDTH_PX / 2) / Game.pixels_per_meter_y),
+                new PointF((rect.right - WALL_WIDTH_PX / 2 - origin.x) / Game.pixels_per_meter_x, (origin.y - rect.bottom + WALL_WIDTH_PX / 2) / Game.pixels_per_meter_y),
         };
     }
 

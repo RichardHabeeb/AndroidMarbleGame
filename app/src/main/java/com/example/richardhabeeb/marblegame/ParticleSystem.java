@@ -30,9 +30,18 @@ class ParticleSystem
 
         // Initially our particles have no speed or acceleration
         for (int i = 0; i < NUM_PARTICLES; i++)
-            Balls.add(new Particle(this));
+            Balls.add(new Particle(this, new PointF(-100,-100)));
 
-        Walls.add(new Wall(900, 0));
+        //Walls.add(new Wall(560, 296));
+        Walls.add(new Wall(180, 180));
+        Walls.add(new Wall(180, 360));
+        Walls.add(new Wall(180, 540));
+        Walls.add(new Wall(180, 720));
+        Walls.add(new Wall(360, 180));
+
+        Walls.add(new Wall(720, 0));
+        Walls.add(new Wall(720, 180));
+        Walls.add(new Wall(720, 360));
     }
 
     // Update the position of each particle in the system using the
@@ -70,62 +79,48 @@ class ParticleSystem
         // update the system's positions
         UpdatePositions (sx, sy, now);
 
-        // We do no more than a limited number of iterations
-        int NUM_MAX_ITERATIONS = 10;
 
-        // Resolve collisions, each particle is tested against every
-        // other particle for collision. If a collision is detected the
-        // particle is moved away using a virtual spring of infinite
-        // stiffness.
-        Random random = new Random ();
+        for (int i = 0; i < Balls.size(); i++) {
+            Particle curr = Balls.get(i);
+            PointF ballCenter =  curr.getLocation();
 
-        boolean more = true;
+            for (int j = 0; j < Walls.size(); j++) {
+                Wall wall = Walls.get(j);
+                PointF wallCenter = wall.getCenter(sim_view.origin);
+                PointF[] wallCorners = wall.getCorners(sim_view.origin);
 
-        for (int k = 0; k < NUM_MAX_ITERATIONS && more; k++) {
-            more = false;
+                double theta = 180 * Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x) / (Math.PI);
 
-            for (int i = 0; i < Balls.size(); i++) {
-                Particle curr = Balls.get(i);
-                PointF ballCenter =  curr.getLocation();
+                PointF edgePointClosestToWall = new PointF(
+                        ballCenter.x + (Particle.BALL_DIAMETER / 2.0f) * (float) Math.cos(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)),
+                        ballCenter.y + (Particle.BALL_DIAMETER / 2.0f) * (float) Math.sin(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)));
 
-                for (int j = 0; j < Walls.size(); j++) {
-                    Wall wall = Walls.get(j);
-                    PointF wallCenter = wall.getCenter(sim_view.origin);
-                    PointF[] wallCorners = wall.getCorners(sim_view.origin);
+                if (edgePointClosestToWall.x > wallCorners[0].x &&
+                        edgePointClosestToWall.x < wallCorners[3].x &&
+                        edgePointClosestToWall.y < wallCorners[0].y &&
+                        edgePointClosestToWall.y > wallCorners[3].y) {
 
-                    double theta = 180*Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x) / (Math.PI);
+                    float distanceToTop = Math.abs(edgePointClosestToWall.y - wallCorners[0].y);
+                    float distanceToLeft = Math.abs(edgePointClosestToWall.x - wallCorners[0].x);
+                    float distanceToBottom = Math.abs(edgePointClosestToWall.y - wallCorners[3].y);
+                    float distanceToRight = Math.abs(edgePointClosestToWall.x - wallCorners[3].x);
 
-                    PointF edgePointClosestToWall = new PointF(
-                            ballCenter.x + (Particle.BALL_DIAMETER / 2.0f) * (float)Math.cos(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)),
-                            ballCenter.y + (Particle.BALL_DIAMETER / 2.0f) * (float)Math.sin(Math.atan2(wallCenter.y - ballCenter.y, wallCenter.x - ballCenter.x)));
-
-                    for(int p = 0; p < wallCorners.length; p++) {
-                        if (PointDistance(wallCorners[p], ballCenter) < (Particle.BALL_DIAMETER / 2.0f)) {
-                            more = true;
-                        }
+                    if (distanceToTop < distanceToLeft && distanceToTop < distanceToBottom && distanceToTop < distanceToRight) {
+                        curr.getLocation().y += distanceToTop;
+                    } else if (distanceToLeft < distanceToTop && distanceToLeft < distanceToBottom && distanceToLeft < distanceToRight) {
+                        curr.getLocation().x -= distanceToLeft;
+                    } else if (distanceToBottom < distanceToTop && distanceToBottom < distanceToLeft && distanceToBottom < distanceToRight) {
+                        curr.getLocation().y -= distanceToBottom;
+                    } else {
+                        curr.getLocation().x += distanceToRight;
                     }
-                    if (PointDistance(wallCenter, ballCenter) < (Particle.BALL_DIAMETER / 2.0f)) {
-                        more = true;
-                    }
-                    if(edgePointClosestToWall.x > wallCorners[0].x &&
-                       edgePointClosestToWall.x < wallCorners[2].x &&
-                       edgePointClosestToWall.y < wallCorners[0].y &&
-                       edgePointClosestToWall.y > wallCorners[2].y) {
-                        more = true;
-                    }
-
-
-
-
-
-
-
                 }
-
-                // Finally make sure the particle doesn't intersects
-                // with the walls.
-                curr.ResolveCollisionWithBounds ();
             }
+
+            // Finally make sure the particle doesn't intersects
+            // with the walls.
+            curr.ResolveCollisionWithBounds ();
         }
+
     }
 }

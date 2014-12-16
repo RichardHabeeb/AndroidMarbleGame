@@ -16,10 +16,10 @@ public class Particle {
 
     private PointF Location;
 
-    public Particle (ParticleSystem system)
+    public Particle (ParticleSystem system, PointF startingLocation)
     {
         this.system = system;
-        Location = new PointF ();
+        Location = startingLocation;
 
         // Make each particle a bit different by randomizing its
         // coefficient of friction
