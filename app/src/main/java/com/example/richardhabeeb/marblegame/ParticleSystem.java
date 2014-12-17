@@ -9,24 +9,29 @@ class ParticleSystem
     public long last_t;
     public float last_delta_t;
 
-    static int NUM_PARTICLES = 1;
     public PointF Bounds = new PointF();
     public PointF startPoint;
 
     public Game sim_view;
 
     public Particle ball;
-
     public List<Wall> Walls;
+    public Exit exit;
 
     public ParticleSystem (Game view)
     {
         sim_view = view;
+
+        resetMaze();
+    }
+
+    public void resetMaze()
+    {
+        sim_view.setPaused(true);
         Walls = new ArrayList<>();
 
-
-        int h =  view.getHeight();
-        int w = view.getWidth();
+        int h =  sim_view.getHeight();
+        int w = sim_view.getWidth();
         int gridRowCount = h / Wall.WALL_WIDTH_PX;
         int gridColCount = w / Wall.WALL_WIDTH_PX;
 
@@ -34,29 +39,30 @@ class ParticleSystem
 
         for(int r = 0; r < gridRowCount; r++) {
             for(int c = 0; c < gridColCount; c++) {
-                if(stringMaze[r].charAt(c) == '*') {
+                if (stringMaze[r].charAt(c) == '*') {
                     Walls.add(new Wall(c * Wall.WALL_WIDTH_PX, r * Wall.WALL_WIDTH_PX));
                 }
 
-                if(stringMaze[r].charAt(c) == 'E') {
+                if (stringMaze[r].charAt(c) == 'S') {
                     startPoint = new PointF(
-                            (view.origin.x - c * Wall.WALL_WIDTH_PX + Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_x,
-                            (view.origin.y - r * Wall.WALL_WIDTH_PX - Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_y);
+                            (sim_view.origin.x - c * Wall.WALL_WIDTH_PX + Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_x,
+                            (sim_view.origin.y - r * Wall.WALL_WIDTH_PX - Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_y);
                     ball = new Particle(this, startPoint);
                 }
 
+                if (stringMaze[r].charAt(c) == 'E') {
+                    exit = new Exit(c * Wall.WALL_WIDTH_PX, r * Wall.WALL_WIDTH_PX);
+                }
             }
         }
 
         for(int c = 0; c < gridColCount; c++) {
-           Walls.add(new Wall(c * Wall.WALL_WIDTH_PX, gridRowCount * Wall.WALL_WIDTH_PX));
+            Walls.add(new Wall(c * Wall.WALL_WIDTH_PX, gridRowCount * Wall.WALL_WIDTH_PX));
         }
+
         for(int r = 0; r < gridRowCount + 1; r++) {
             Walls.add(new Wall(gridColCount * Wall.WALL_WIDTH_PX, r * Wall.WALL_WIDTH_PX));
         }
-
-        //Walls.add(new Wall(1280/2 - Wall.WALL_WIDTH_PX / 2, 752/2 - Wall.WALL_WIDTH_PX / 2));
-
     }
 
     // Update the position of each particle in the system using the
@@ -128,6 +134,13 @@ class ParticleSystem
                     }
                 }
             }
+
+            PointF exitCenter = exit.getCenter(sim_view.origin);
+
+            if(Math.sqrt((ballCenter.y - exitCenter.y)*(ballCenter.y - exitCenter.y) + (ballCenter.x - exitCenter.x)*(ballCenter.x - exitCenter.x)) < Particle.BALL_DIAMETER / 2.0f) {
+                resetMaze();
+            }
+
 
             // Finally make sure the particle doesn't intersects
             // with the walls.

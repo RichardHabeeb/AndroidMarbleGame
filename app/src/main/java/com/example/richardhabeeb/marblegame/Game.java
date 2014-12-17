@@ -96,6 +96,8 @@ public class Game extends View implements SensorEventListener  {
             canvas.drawRect(wall.rect, wall.paint);
         }
 
+        canvas.drawRect(particles.exit.rect, particles.exit.paint);
+
         if(paused) {
             canvas.drawRect(screenCover, screenCoverPaint);
             canvas.drawText("Tap the screen to start!", canvas.getWidth()/2, canvas.getHeight()/2, textPaint);
