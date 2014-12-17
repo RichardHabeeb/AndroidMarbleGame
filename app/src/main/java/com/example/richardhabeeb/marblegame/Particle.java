@@ -6,8 +6,9 @@ import java.util.*;
 
 public class Particle {
     public static float FRICTION = 0.05f;
-    public static float BALL_DIAMETER = 0.004f;
-    public static float BALL_DIAMETER_2 = BALL_DIAMETER * BALL_DIAMETER;
+    public static float BALL_DIAMETER;
+    public static float BALL_DIAMETER_PX = 50.0f;
+
 
     private ParticleSystem system;
     private PointF prev_location = new PointF ();
@@ -20,6 +21,7 @@ public class Particle {
     {
         this.system = system;
         Location = startingLocation;
+        //prev_location = startingLocation;
 
         // Make each particle a bit different by randomizing its
         // coefficient of friction
