@@ -5,7 +5,6 @@ import android.graphics.*;
 import java.util.*;
 
 public class Particle {
-    public static float FRICTION = 0.05f;
     public static float BALL_DIAMETER;
     public static float BALL_DIAMETER_PX = 50.0f;
 
@@ -13,27 +12,24 @@ public class Particle {
     private ParticleSystem system;
     private PointF prev_location = new PointF ();
     private PointF accel = new PointF ();
-    private float friction;
 
-    private PointF Location;
+    private PointF Location = new PointF();
 
     public Particle (ParticleSystem system, PointF startingLocation)
     {
         this.system = system;
-        Location = startingLocation;
-        //prev_location = startingLocation;
-
-        // Make each particle a bit different by randomizing its
-        // coefficient of friction
-        Random random = new Random ();
-        float r = ((float)random.nextDouble() - 0.5f) * 0.2f;
-
-        friction = 1.0f - FRICTION + r;
+        resetLocation(startingLocation);
     }
 
     public PointF getLocation()
     {
         return Location;
+    }
+
+    public void resetLocation(PointF startLocation) {
+        Location.set(startLocation.x, startLocation.y);
+        prev_location.set(startLocation.x, startLocation.y);
+        accel = new PointF();
     }
 
     public void ComputePhysics (float sx, float sy, float dT, float dTC)
@@ -57,9 +53,11 @@ public class Particle {
         // x(t) + (x(t) - x(t-Æt)) * (Æt/Æt_prev) + a(t)Ætö2 We also add
         // a simple friction term (f) to the equation: x(t+Æt) = x(t) +
         // (1-f) * (x(t) - x(t-Æt)) * (Æt/Æt_prev) + a(t)Ætö2
+
         float dTdT = dT * dT;
-        float x = Location.x + friction * dTC * (Location.x - prev_location.x) + accel.x * dTdT;
-        float y = Location.y + friction * dTC * (Location.y - prev_location.y) + accel.y * dTdT;
+        float x = Location.x + dTC * (Location.x - prev_location.x) + accel.x * dTdT;
+        float y = Location.y + dTC * (Location.y - prev_location.y) + accel.y * dTdT;
+
 
         prev_location.set(Location);
         Location.set(x, y);

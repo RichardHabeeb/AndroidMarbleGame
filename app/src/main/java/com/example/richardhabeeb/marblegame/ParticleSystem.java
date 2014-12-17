@@ -11,6 +11,7 @@ class ParticleSystem
 
     static int NUM_PARTICLES = 1;
     public PointF Bounds = new PointF();
+    public PointF startPoint;
 
     public Game sim_view;
 
@@ -38,9 +39,10 @@ class ParticleSystem
                 }
 
                 if(stringMaze[r].charAt(c) == 'E') {
-                    ball = new Particle(this, new PointF(
+                    startPoint = new PointF(
                             (view.origin.x - c * Wall.WALL_WIDTH_PX + Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_x,
-                            (view.origin.y - r * Wall.WALL_WIDTH_PX - Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_y));
+                            (view.origin.y - r * Wall.WALL_WIDTH_PX - Particle.BALL_DIAMETER_PX / 2) / Game.pixels_per_meter_y);
+                    ball = new Particle(this, startPoint);
                 }
 
             }
@@ -110,6 +112,10 @@ class ParticleSystem
                     float distanceToLeft = Math.abs(edgePointClosestToWall.x - wallCorners[0].x);
                     float distanceToBottom = Math.abs(edgePointClosestToWall.y - wallCorners[3].y);
                     float distanceToRight = Math.abs(edgePointClosestToWall.x - wallCorners[3].x);
+
+                    if(Math.sqrt((ballCenter.y - wallCenter.y)*(ballCenter.y - wallCenter.y) + (ballCenter.x - wallCenter.x)*(ballCenter.x - wallCenter.x)) < Particle.BALL_DIAMETER / 2.0f) {
+                        ball.resetLocation(startPoint);
+                    }
 
                     if (distanceToTop < distanceToLeft && distanceToTop < distanceToBottom && distanceToTop < distanceToRight) {
                         ballCenter.y += distanceToTop;
